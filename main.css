@@ -66,6 +66,9 @@ a, button { touch-action: manipulation; }
 
 /* ============================================================
    Orbs de fundo
+   Sem filter: blur() — em GPU fraca de celular ele custa um frame
+   inteiro por orb. O radial-gradient com parada mais longa dá o
+   mesmo visual difuso de graça; o drift (só transform) fica.
    ============================================================ */
 .orb {
   position: fixed;
@@ -77,28 +80,24 @@ a, button { touch-action: manipulation; }
 }
 .orb-1 {
   width: 64vmax; height: 64vmax; max-width: 560px; max-height: 560px;
-  background: radial-gradient(circle, rgba(255, 94, 138, 0.16) 0%, transparent 64%);
-  filter: blur(70px);
+  background: radial-gradient(circle, rgba(255, 94, 138, 0.15) 0%, rgba(255, 94, 138, 0.06) 42%, transparent 72%);
   top: -22vmax; left: -18vmax;
 }
 .orb-2 {
   width: 48vmax; height: 48vmax; max-width: 420px; max-height: 420px;
-  background: radial-gradient(circle, rgba(150, 38, 110, 0.17) 0%, transparent 64%);
-  filter: blur(78px);
+  background: radial-gradient(circle, rgba(150, 38, 110, 0.16) 0%, rgba(150, 38, 110, 0.06) 42%, transparent 72%);
   bottom: -12vmax; right: -14vmax;
   animation-duration: 23s; animation-delay: -5s;
 }
 .orb-3 {
   width: 30vmax; height: 30vmax; max-width: 280px; max-height: 280px;
-  background: radial-gradient(circle, rgba(122, 60, 255, 0.10) 0%, transparent 64%);
-  filter: blur(60px);
+  background: radial-gradient(circle, rgba(122, 60, 255, 0.09) 0%, rgba(122, 60, 255, 0.04) 42%, transparent 72%);
   bottom: 30%; left: 4%;
   animation-duration: 16s; animation-delay: -8s;
 }
 .orb-4 {
   width: 24vmax; height: 24vmax; max-width: 220px; max-height: 220px;
-  background: radial-gradient(circle, rgba(255, 217, 160, 0.08) 0%, transparent 64%);
-  filter: blur(54px);
+  background: radial-gradient(circle, rgba(255, 217, 160, 0.07) 0%, rgba(255, 217, 160, 0.03) 42%, transparent 72%);
   top: 20%; right: 8%;
   animation-duration: 20s; animation-delay: -2s;
 }
@@ -122,9 +121,8 @@ a, button { touch-action: manipulation; }
   top: calc(var(--safe-top) + 14px);
   z-index: 100;
   border: 1px solid var(--pink-border);
-  background: rgba(28, 6, 32, 0.40);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  backdrop-filter: blur(14px) saturate(1.4);
+  /* fundo mais escuro no lugar de backdrop-filter: blur custa caro no WebKit mobile */
+  background: rgba(28, 6, 32, 0.72);
   color: var(--ink);
   cursor: pointer;
   animation: control-in 0.7s cubic-bezier(.2, .9, .2, 1) 0.45s both;
@@ -212,8 +210,8 @@ a, button { touch-action: manipulation; }
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+  /* sem drop-shadow aqui: filter + shimmer animado = repaint caro por frame */
   animation: name-shimmer 5s ease-in-out 1.2s infinite;
-  filter: drop-shadow(0 0 14px rgba(255, 94, 138, 0.35));
 }
 
 .menu__sub {
@@ -253,9 +251,8 @@ a, button { touch-action: manipulation; }
   border: 1px solid var(--stroke);
   background:
     linear-gradient(145deg, rgba(255, 217, 160, 0.05), transparent 36%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
-  backdrop-filter: blur(16px) saturate(1.3);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(20, 5, 26, 0.55);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
   color: var(--ink);
   text-decoration: none;
@@ -452,9 +449,7 @@ a, button { touch-action: manipulation; }
   display: grid;
   place-items: center;
   padding: 30px;
-  background: rgba(11, 3, 20, 0.72);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: rgba(11, 3, 20, 0.90);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -479,9 +474,7 @@ a, button { touch-action: manipulation; }
   display: grid;
   place-items: center;
   padding: 28px;
-  background: rgba(11, 3, 20, 0.55);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  backdrop-filter: blur(18px) saturate(1.3);
+  background: rgba(11, 3, 20, 0.84);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -575,13 +568,11 @@ a, button { touch-action: manipulation; }
   overflow: hidden;
   background:
     linear-gradient(160deg, rgba(255, 170, 198, 0.08), rgba(255, 255, 255, 0.025) 50%),
-    rgba(24, 4, 22, 0.62);
+    rgba(24, 4, 22, 0.82);
   border: 1px solid var(--pink-border);
   border-radius: 26px;
   padding: clamp(30px, 6vw, 50px) clamp(24px, 5.5vw, 46px) clamp(26px, 5vw, 42px);
   box-shadow: 0 34px 90px rgba(0, 0, 0, 0.40), 0 0 54px rgba(255, 94, 138, 0.10);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
-  backdrop-filter: blur(14px) saturate(1.3);
   font-family: 'Caveat', cursive;
   font-size: clamp(1.32rem, 5.6vw, 1.6rem);
   font-weight: 500;
@@ -811,8 +802,8 @@ body.is-leaving::before {
 }
 
 @keyframes header-rise {
-  0%   { opacity: 0; transform: translateY(22px) scale(0.985); filter: blur(6px); }
-  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  0%   { opacity: 0; transform: translateY(22px) scale(0.985); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes soft-fade-up {
@@ -836,8 +827,8 @@ body.is-leaving::before {
 }
 
 @keyframes puzzle-reveal {
-  0%   { opacity: 0; transform: translateY(26px) scale(0.94); filter: blur(6px); }
-  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  0%   { opacity: 0; transform: translateY(26px) scale(0.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes piece-drop {
@@ -870,8 +861,8 @@ body.is-leaving::before {
 }
 
 @keyframes paper-settle {
-  0%   { opacity: 0; transform: translateY(28px) rotateX(8deg) scale(0.98); filter: blur(7px); }
-  100% { opacity: 1; transform: translateY(0) rotateX(0) scale(1); filter: blur(0); }
+  0%   { opacity: 0; transform: translateY(28px) rotateX(8deg) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) rotateX(0) scale(1); }
 }
 
 @keyframes paper-shine {

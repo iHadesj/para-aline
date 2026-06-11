@@ -11,7 +11,10 @@
   var ctx = canvas.getContext('2d');
   var W, H, DPR;
   var hearts = [];
-  var COUNT = 16;
+  /* celular fraco: menos corações e render em 1x — eles são difusos,
+     ninguém percebe a resolução, mas a GPU percebe os pixels a menos */
+  var isPhone = Math.min(screen.width, screen.height) < 520;
+  var COUNT = isPhone ? 12 : 16;
   var running = true;
   var rafId = null;
 
@@ -52,7 +55,7 @@
   }
 
   function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = isPhone ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
     W = window.innerWidth;
     H = window.innerHeight;
     canvas.width  = W * DPR;

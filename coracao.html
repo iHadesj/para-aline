@@ -11,20 +11,10 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
-  <!-- ?v=2 força o iPhone a baixar a versão nova em vez de usar o cache -->
-  <link rel="stylesheet" href="main.css?v=2">
-  <style>
-    /* Ajustes de performance só desta página (o canvas do coração já é pesado):
-       blur() nos orbs, animação infinita neles e backdrop-filter custam MUITO
-       no Safari do iPhone — aqui tudo isso sai */
-    .orb { filter: none; animation: none; will-change: auto; }
-    .back-btn, .music-btn {
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-      background: rgba(28, 6, 32, 0.72);
-    }
-  </style>
+  <!-- só Poppins: é a única família que esta página usa -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- ?v=3 força o iPhone a baixar a versão nova em vez de usar o cache -->
+  <link rel="stylesheet" href="main.css?v=3">
 </head>
 <body>
 
@@ -147,7 +137,11 @@
     }
 
     function particleCount() {
-      return Math.max(130, Math.min(280, Math.floor((W * H) / 2400)));
+      /* celular começa com teto menor: o watchPerf corta depois, mas só após
+         ~2s de engasgo — melhor já nascer leve num aparelho fraco */
+      var cap = isPhone ? 170 : 280;
+      var min = isPhone ? 110 : 130;
+      return Math.max(min, Math.min(cap, Math.floor((W * H) / 2400)));
     }
 
     function buildTargets(count) {
@@ -187,7 +181,7 @@
       });
 
       sparkles = [];
-      for (var i = 0; i < 12; i++) {
+      for (var i = 0; i < (isPhone ? 8 : 12); i++) {
         sparkles.push({
           x: Math.random() * W,
           y: Math.random() * H,
