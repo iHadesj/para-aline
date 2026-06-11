@@ -5,11 +5,11 @@
 
    👉 Pra funcionar: coloque um arquivo chamado  musica.mp3  na pasta  audio/  */
 (function () {
-  var btn = document.getElementById('music-btn');
+  var btn = document.getElementById("music-btn");
   if (!btn) return;
 
-  var SRC = 'audio/musica.mp3';
-  var KEY = 'aline-music';
+  var SRC = "audio/musica.mp3";
+  var KEY = "aline-music";
   var TARGET_VOL = 0.35;
 
   var audio = null;
@@ -22,34 +22,41 @@
     try {
       var raw = localStorage.getItem(KEY);
       return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
+    } catch (e) {
+      return null;
+    }
   }
   function saveState() {
     try {
-      localStorage.setItem(KEY, JSON.stringify({
-        on: on,
-        t: audio ? audio.currentTime : 0,
-      }));
-    } catch (e) { /* tudo bem, só não lembra */ }
+      localStorage.setItem(
+        KEY,
+        JSON.stringify({
+          on: on,
+          t: audio ? audio.currentTime : 0,
+        }),
+      );
+    } catch (e) {
+      /* tudo bem, só não lembra */
+    }
   }
 
   function getAudio() {
     if (!audio) {
       audio = new Audio(SRC);
       audio.loop = true;
-      audio.preload = 'metadata';
+      audio.preload = "metadata";
       audio.volume = TARGET_VOL;
 
-      audio.addEventListener('error', function () {
+      audio.addEventListener("error", function () {
         missing = true;
         on = false;
-        btn.classList.remove('playing');
-        btn.classList.add('music-btn--missing');
-        btn.title = 'Coloque sua música em audio/musica.mp3';
+        btn.classList.remove("playing");
+        btn.classList.add("music-btn--missing");
+        btn.title = "Coloque sua música em audio/musica.mp3";
       });
 
       /* salva o ponto da música de tempos em tempos */
-      audio.addEventListener('timeupdate', saveState);
+      audio.addEventListener("timeupdate", saveState);
     }
     return audio;
   }
@@ -66,15 +73,19 @@
   function play(resumeAt) {
     var a = getAudio();
     if (missing) return;
-    if (typeof resumeAt === 'number' && isFinite(resumeAt) && resumeAt > 0) {
-      try { a.currentTime = resumeAt; } catch (e) { /* metadata ainda não veio */ }
+    if (typeof resumeAt === "number" && isFinite(resumeAt) && resumeAt > 0) {
+      try {
+        a.currentTime = resumeAt;
+      } catch (e) {
+        /* metadata ainda não veio */
+      }
     }
     var p = a.play();
     if (p && p.catch) {
       p.then(function () {
         on = true;
-        btn.classList.add('playing');
-        btn.classList.remove('nudge');
+        btn.classList.add("playing");
+        btn.classList.remove("nudge");
         fadeIn(a);
         saveState();
       }).catch(function () {
@@ -88,7 +99,7 @@
     clearInterval(fadeTimer);
     audio.pause();
     on = false;
-    btn.classList.remove('playing');
+    btn.classList.remove("playing");
     saveState();
   }
 
@@ -97,10 +108,10 @@
     else play();
   }
 
-  btn.addEventListener('click', toggle);
+  btn.addEventListener("click", toggle);
 
   /* salva o estado quando sai da página (pagehide é o confiável no iOS) */
-  window.addEventListener('pagehide', saveState);
+  window.addEventListener("pagehide", saveState);
 
   /* ── Retomada entre páginas ──────────────────────────────────────────
      Se na página anterior a música estava tocando, o iPhone não deixa
@@ -109,7 +120,7 @@
      do ponto exato em que parou. */
   var saved = loadState();
   if (saved && saved.on) {
-    btn.classList.add('nudge');
+    btn.classList.add("nudge");
 
     var resumed = false;
     var resume = function () {
@@ -119,6 +130,6 @@
     };
     /* bindTap (presentation.js) cai pra touch/mouse em iOS sem Pointer Events */
     if (window.bindTap) window.bindTap(document, resume);
-    else document.addEventListener('pointerdown', resume);
+    else document.addEventListener("pointerdown", resume);
   }
 })();
