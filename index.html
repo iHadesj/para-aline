@@ -1,70 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0314">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Para a Aline ❤</title>
-  <link rel="icon" type="image/png" href="assets/apple-touch-icon.png">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="main.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0b0314" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <title>Alino ❤</title>
+    <link rel="icon" type="image/png" href="assets/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&family=Caveat:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
 
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-  <div class="orb orb-4"></div>
+    <canvas id="hearts-canvas"></canvas>
 
-  <canvas id="hearts-canvas"></canvas>
+    <button
+      class="music-btn"
+      id="music-btn"
+      title="Música"
+      aria-label="Tocar ou pausar música"
+    >
+      <i data-lucide="music"></i>
+    </button>
 
-  <button class="music-btn" id="music-btn" title="Música" aria-label="Tocar ou pausar música"><i data-lucide="music"></i></button>
+    <main class="menu">
+      <header class="menu__header">
+        <span class="menu__eyebrow">12 · junho</span>
+        <h1 class="menu__title">Pra você, <strong>Alino</strong></h1>
+        <p class="menu__sub">Feliz Dia dos Namorados ❤</p>
+      </header>
 
-  <main class="menu">
-    <header class="menu__header">
-      <span class="menu__eyebrow">12 · junho</span>
-      <h1 class="menu__title">Para você, <strong>Aline</strong></h1>
-      <p class="menu__sub">Feliz Dia dos Namorados ❤</p>
-    </header>
+      <nav class="cards">
+        <a href="coracao.html" class="card">
+          <span class="card__icon"><i data-lucide="heart"></i></span>
+          <div>
+            <h2 class="card__title">Coração</h2>
+            <p class="card__desc">Entra ai pra ver (foi difícil fazer)</p>
+          </div>
+        </a>
 
-    <nav class="cards">
-      <a href="coracao.html" class="card">
-        <span class="card__icon"><i data-lucide="heart"></i></span>
-        <div>
-          <h2 class="card__title">Coração</h2>
-          <p class="card__desc">Toque nele e veja o que acontece</p>
-        </div>
-      </a>
+        <a href="puzzle.html" class="card">
+          <span class="card__icon"><i data-lucide="puzzle"></i></span>
+          <div>
+            <h2 class="card__title">Puzzle</h2>
+            <p class="card__desc">Se montar vai conseguir ver uma coisa</p>
+          </div>
+        </a>
+      </nav>
 
-      <a href="puzzle.html" class="card">
-        <span class="card__icon"><i data-lucide="puzzle"></i></span>
-        <div>
-          <h2 class="card__title">Puzzle</h2>
-          <p class="card__desc">Monte o quebra-cabeça pra descobrir algo</p>
-        </div>
-      </a>
+      <p class="menu__footer">feito com muito amor, só pra você</p>
+    </main>
 
-      <a href="carta.html" class="card">
-        <span class="card__icon"><i data-lucide="mail"></i></span>
-        <div>
-          <h2 class="card__title">Carta</h2>
-          <p class="card__desc">Uma mensagem que queria te dar</p>
-        </div>
-      </a>
-    </nav>
-
-    <p class="menu__footer">feito com muito amor, só pra você</p>
-  </main>
-
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script>if (window.lucide) lucide.createIcons();</script>
-  <script src="presentation.js"></script>
-  <script src="background.js"></script>
-  <script src="music.js"></script>
-</body>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>
+      if (window.lucide) lucide.createIcons();
+    </script>
+    <script src="presentation.js"></script>
+    <script src="background.js"></script>
+    <script src="music.js"></script>
+  </body>
 </html>
