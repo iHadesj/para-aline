@@ -36,7 +36,7 @@
       />
     </noscript>
     <link rel="preload" as="image" href="assets/puzzle-art.png" />
-    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="main.css?v=4" />
   </head>
   <body>
     <div class="orb orb-1"></div>
@@ -89,9 +89,9 @@
       </div>
     </div>
 
-    <script src="presentation.js"></script>
-    <script src="background.js"></script>
-    <script src="music.js"></script>
+    <script src="presentation.js?v=4"></script>
+    <script src="background.js?v=4"></script>
+    <script src="music.js?v=4"></script>
     <script>
       (function () {
         var COLS = 3;
@@ -298,9 +298,9 @@
           peek.classList.remove("show");
         }
 
-        peekBtn.addEventListener("pointerdown", showPeek);
-        window.addEventListener("pointerup", hidePeek);
-        window.addEventListener("pointercancel", hidePeek);
+        /* bindTap/bindTapEnd cobrem iOS antigo sem Pointer Events */
+        window.bindTap(peekBtn, showPeek);
+        window.bindTapEnd(window, hidePeek);
         peekBtn.addEventListener("contextmenu", function (e) {
           e.preventDefault();
         });

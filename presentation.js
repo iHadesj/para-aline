@@ -2,6 +2,37 @@
   var reduceMotion = window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ── Toque compatível ─────────────────────────────────────────────
+     iPhone com iOS < 13 não tem Pointer Events: qualquer código preso
+     em 'pointerdown' simplesmente nunca dispara lá (música não toca,
+     coração não explode…). Aqui caímos pra touch/mouse quando preciso,
+     ignorando o mousedown sintético que o iOS dispara após o toque. */
+  var lastTouchTime = 0;
+  window.bindTap = function (target, handler) {
+    if (window.PointerEvent) {
+      target.addEventListener('pointerdown', handler);
+      return;
+    }
+    target.addEventListener('touchstart', function (e) {
+      lastTouchTime = Date.now();
+      handler(e);
+    });
+    target.addEventListener('mousedown', function (e) {
+      if (Date.now() - lastTouchTime < 800) return; // toque já tratado
+      handler(e);
+    });
+  };
+  window.bindTapEnd = function (target, handler) {
+    if (window.PointerEvent) {
+      target.addEventListener('pointerup', handler);
+      target.addEventListener('pointercancel', handler);
+      return;
+    }
+    target.addEventListener('touchend', handler);
+    target.addEventListener('touchcancel', handler);
+    target.addEventListener('mouseup', handler);
+  };
+
   function isModifiedClick(event) {
     return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
   }
@@ -45,23 +76,28 @@
   }
 
   function setupCardGlow() {
+    /* glow é decorativo e só faz sentido com mouse — sem Pointer Events, pula */
+    if (!window.PointerEvent) return;
+
     var cards = document.querySelectorAll('.card');
 
-    cards.forEach(function (card) {
-      card.addEventListener('pointermove', function (event) {
-        var rect = card.getBoundingClientRect();
-        var x = ((event.clientX - rect.left) / rect.width) * 100;
-        var y = ((event.clientY - rect.top) / rect.height) * 100;
+    for (var i = 0; i < cards.length; i++) {
+      (function (card) {
+        card.addEventListener('pointermove', function (event) {
+          var rect = card.getBoundingClientRect();
+          var x = ((event.clientX - rect.left) / rect.width) * 100;
+          var y = ((event.clientY - rect.top) / rect.height) * 100;
 
-        card.style.setProperty('--mx', x.toFixed(2) + '%');
-        card.style.setProperty('--my', y.toFixed(2) + '%');
-      });
+          card.style.setProperty('--mx', x.toFixed(2) + '%');
+          card.style.setProperty('--my', y.toFixed(2) + '%');
+        });
 
-      card.addEventListener('pointerleave', function () {
-        card.style.setProperty('--mx', '50%');
-        card.style.setProperty('--my', '12%');
-      });
-    });
+        card.addEventListener('pointerleave', function () {
+          card.style.setProperty('--mx', '50%');
+          card.style.setProperty('--my', '12%');
+        });
+      })(cards[i]);
+    }
   }
 
   window.loveBurst = function (amount) {

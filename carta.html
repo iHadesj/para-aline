@@ -15,7 +15,7 @@
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Caveat:wght@500;600;700&display=swap">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet"></noscript>
-  <link rel="stylesheet" href="main.css">
+  <link rel="stylesheet" href="main.css?v=4">
 </head>
 <body>
 
@@ -46,9 +46,9 @@
 
   <p class="skip-hint" id="skip-hint">toque na tela pra acelerar</p>
 
-  <script src="presentation.js"></script>
-  <script src="background.js"></script>
-  <script src="music.js"></script>
+  <script src="presentation.js?v=4"></script>
+  <script src="background.js?v=4"></script>
+  <script src="music.js?v=4"></script>
   <script>
   (function () {
     // ── Conteúdo da carta — edite à vontade ──────────────────────────────────
@@ -128,8 +128,9 @@
       }
     }
 
-    document.addEventListener('pointerdown', function (e) {
-      if (e.target.closest('a, button')) return;
+    /* bindTap (presentation.js) cobre iOS antigo sem Pointer Events */
+    window.bindTap(document, function (e) {
+      if (e.target.closest && e.target.closest('a, button')) return;
       accelerate();
     });
 

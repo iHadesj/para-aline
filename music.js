@@ -111,10 +111,14 @@
   if (saved && saved.on) {
     btn.classList.add('nudge');
 
+    var resumed = false;
     var resume = function () {
-      document.removeEventListener('pointerdown', resume);
+      if (resumed) return;
+      resumed = true;
       if (!on && !missing) play(saved.t || 0);
     };
-    document.addEventListener('pointerdown', resume);
+    /* bindTap (presentation.js) cai pra touch/mouse em iOS sem Pointer Events */
+    if (window.bindTap) window.bindTap(document, resume);
+    else document.addEventListener('pointerdown', resume);
   }
 })();

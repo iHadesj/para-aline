@@ -15,8 +15,8 @@
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"></noscript>
-  <!-- ?v=3 força o iPhone a baixar a versão nova em vez de usar o cache -->
-  <link rel="stylesheet" href="main.css?v=3">
+  <!-- ?v=4 força o iPhone a baixar a versão nova em vez de usar o cache -->
+  <link rel="stylesheet" href="main.css?v=4">
 </head>
 <body>
 
@@ -35,10 +35,34 @@
 
   <p class="love-hint" id="love-hint">toque no coração ✨</p>
 
-  <script src="presentation.js?v=2"></script>
-  <script src="music.js?v=2"></script>
+  <script src="presentation.js?v=4"></script>
+  <script src="music.js?v=4"></script>
   <script>
   (function () {
+    /* ── Diagnóstico: abra com ?fps no fim da URL ───────────────────
+       Criado ANTES de tudo, então aparece mesmo se algo quebrar depois.
+       Qualquer erro de JS também é mostrado na tela em vez de morrer
+       em silêncio (essencial pra debugar num iPhone sem console). */
+    var fpsEl = null, fpsCount = 0, fpsT0 = 0;
+    var DEBUG = /[?&]fps/.test(location.search);
+    if (DEBUG) {
+      fpsEl = document.createElement('div');
+      fpsEl.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:9999;' +
+        'font:12px/1.4 monospace;color:#7fff9f;background:rgba(0,0,0,.65);' +
+        'padding:4px 9px;border-radius:8px;pointer-events:none';
+      fpsEl.textContent = 'carregando…';
+      document.body.appendChild(fpsEl);
+
+      window.onerror = function (msg, src, line) {
+        var box = document.createElement('div');
+        box.style.cssText = 'position:fixed;left:10px;top:70px;right:10px;z-index:9999;' +
+          'font:11px/1.5 monospace;color:#ffb3b3;background:rgba(60,0,0,.85);' +
+          'padding:8px 10px;border-radius:8px;word-break:break-all';
+        box.textContent = 'ERRO: ' + msg + ' @ ' + (src || '').split('/').pop() + ':' + line;
+        document.body.appendChild(box);
+      };
+    }
+
     var reduceMotion = window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -46,6 +70,10 @@
     var canvas = document.getElementById('love-canvas');
     var hintEl = document.getElementById('love-hint');
     var ctx    = canvas.getContext('2d');
+    if (!ctx) {
+      if (fpsEl) fpsEl.textContent = 'sem contexto 2d (memória de canvas esgotada?)';
+      return;
+    }
 
     stage.style.touchAction = 'manipulation';
 
@@ -66,16 +94,6 @@
        bolinhas se sobrepõem — só que em GPU fraca ele pode derrubar o canvas
        pro renderizador de CPU e travar tudo. Hardware fraco fica sem ele. */
     var ADDITIVE = !lowEnd;
-
-    // medidor de FPS pra diagnosticar no aparelho: abra a página com ?fps no fim
-    var fpsEl = null, fpsCount = 0, fpsT0 = 0;
-    if (/[?&]fps/.test(location.search)) {
-      fpsEl = document.createElement('div');
-      fpsEl.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:9999;' +
-        'font:12px/1.4 monospace;color:#7fff9f;background:rgba(0,0,0,.65);' +
-        'padding:4px 9px;border-radius:8px;pointer-events:none';
-      document.body.appendChild(fpsEl);
-    }
 
     var W, H, S, CY, CX;
     var particles = [];
@@ -326,10 +344,11 @@
       }
     }
 
-    // ── Interação ──────────────────────────────────────────────────
-    stage.addEventListener('pointerdown', function (e) {
+    // ── Interação (bindTap cobre iOS antigo sem Pointer Events) ────
+    window.bindTap(stage, function (e) {
       if (reduceMotion) return;
-      explode(e.clientX, e.clientY);
+      var pt = e.changedTouches ? e.changedTouches[0] : e;
+      explode(pt.clientX, pt.clientY);
       if (hintEl) hintEl.classList.add('hide');
 
       var now = Date.now();

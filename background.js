@@ -83,7 +83,7 @@
       swaySp: Math.random() * 0.012 + 0.005,
       angle:  (Math.random() - 0.5) * 0.6,
       spin:   (Math.random() - 0.5) * 0.006,
-      alpha:  Math.random() * 0.13 + 0.05,
+      alpha:  Math.random() * 0.16 + 0.09, // visível até em tela com brilho baixo
       sprite: sprites[~~(Math.random() * sprites.length)],
     };
   }
