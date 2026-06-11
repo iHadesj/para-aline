@@ -102,6 +102,14 @@ a, button { touch-action: manipulation; }
   animation-duration: 20s; animation-delay: -2s;
 }
 
+/* Celular: cada orb é uma camada na GPU (e em DPR 3 são camadas ENORMES).
+   Duas dão o mesmo clima — e continuam se mexendo. O shimmer do nome sai
+   porque animar background-position em texto recortado repinta por frame. */
+@media (max-width: 639px) {
+  .orb-3, .orb-4 { display: none; }
+  .menu__title strong { animation: none; }
+}
+
 /* ============================================================
    Canvas de corações flutuando
    ============================================================ */

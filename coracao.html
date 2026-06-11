@@ -11,8 +11,10 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- só Poppins: é a única família que esta página usa -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- só Poppins (única família usada), carregada sem bloquear a primeira pintura -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"></noscript>
   <!-- ?v=3 força o iPhone a baixar a versão nova em vez de usar o cache -->
   <link rel="stylesheet" href="main.css?v=3">
 </head>
@@ -50,12 +52,20 @@
     // Celular renderiza em 1x: as partículas são bolinhas de brilho difusas,
     // resolução retina aqui só multiplica pixel sem ninguém notar a diferença
     var isPhone = Math.min(screen.width, screen.height) < 520;
-    var DPR = isPhone ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
+
+    /* hardware fraco nem sempre é celular pequeno: tablet barato, notebook
+       antigo e celular em "modo desktop" reportam tela grande. Poucos núcleos
+       ou pouca RAM → começa no modo leve também */
+    var weakHW = (navigator.hardwareConcurrency || 8) <= 4 ||
+                 (navigator.deviceMemory || 8) <= 4;
+    var lowEnd = isPhone || weakHW;
+
+    var DPR = lowEnd ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
 
     /* O blending aditivo ('lighter') é o que deixa o brilho somando onde as
-       bolinhas se sobrepõem — só que no WebKit do iPhone ele pode derrubar o
-       canvas pro renderizador de CPU e travar tudo. Celular fica sem ele. */
-    var ADDITIVE = !isPhone;
+       bolinhas se sobrepõem — só que em GPU fraca ele pode derrubar o canvas
+       pro renderizador de CPU e travar tudo. Hardware fraco fica sem ele. */
+    var ADDITIVE = !lowEnd;
 
     // medidor de FPS pra diagnosticar no aparelho: abra a página com ?fps no fim
     var fpsEl = null, fpsCount = 0, fpsT0 = 0;
@@ -124,6 +134,11 @@
     function layout() {
       W = window.innerWidth;
       H = window.innerHeight;
+      /* teto de pixels do canvas: tela grande + retina explode o custo de
+         preenchimento por frame (ex.: 1920×1080 em 1.5x = 4.7M pixels) */
+      var px = W * H * DPR * DPR;
+      if (px > 2.4e6) DPR = Math.max(1, Math.sqrt(2.4e6 / (W * H)));
+
       canvas.width  = Math.floor(W * DPR);
       canvas.height = Math.floor(H * DPR);
       canvas.style.width  = W + 'px';
@@ -137,10 +152,10 @@
     }
 
     function particleCount() {
-      /* celular começa com teto menor: o watchPerf corta depois, mas só após
-         ~2s de engasgo — melhor já nascer leve num aparelho fraco */
-      var cap = isPhone ? 170 : 280;
-      var min = isPhone ? 110 : 130;
+      /* hardware fraco começa com teto menor: o watchPerf corta depois,
+         mas melhor já nascer leve num aparelho fraco */
+      var cap = lowEnd ? 170 : 280;
+      var min = lowEnd ? 110 : 130;
       return Math.max(min, Math.min(cap, Math.floor((W * H) / 2400)));
     }
 
@@ -181,7 +196,7 @@
       });
 
       sparkles = [];
-      for (var i = 0; i < (isPhone ? 8 : 12); i++) {
+      for (var i = 0; i < (lowEnd ? 8 : 12); i++) {
         sparkles.push({
           x: Math.random() * W,
           y: Math.random() * H,
@@ -200,22 +215,28 @@
       }
     }
 
-    /* ── Plano B automático: mede os primeiros ~2s e, se o aparelho
-       estiver perdendo muitos frames, corta partícula na metade e
-       engorda as que sobram — o coração continua cheio, só que leve ── */
-    var ftFrames = 0, ftSlow = 0, ftLast = 0, ftDone = false, ftRounds = 0;
+    /* ── Plano B automático: mede os primeiros frames e, se o aparelho
+       estiver perdendo muitos, corta partícula na metade e engorda as
+       que sobram — o coração continua cheio, só que leve.
+       Importante: num aparelho a 5fps, esperar 110 frames levaria 22s
+       de tela travada. Por isso o atalho: 4 frames catastróficos
+       (>90ms) já degradam na hora, sem esperar a amostra completa. ── */
+    var ftFrames = 0, ftSlow = 0, ftBad = 0, ftLast = 0, ftDone = false, ftRounds = 0;
     function watchPerf(now) {
       if (ftLast) {
         ftFrames++;
-        if (now - ftLast > 26) ftSlow++; // frame de 60fps estourado com folga
+        var d = now - ftLast;
+        if (d > 26) ftSlow++; // frame de 60fps estourado com folga
+        if (d > 90) ftBad++;  // travada braba
       }
       ftLast = now;
-      if (ftFrames >= 110) {
-        if (ftSlow > ftFrames * 0.35 && ftRounds < 2) {
+      var emergency = ftBad >= 4;
+      if (emergency || ftFrames >= 110) {
+        if ((emergency || ftSlow > ftFrames * 0.35) && ftRounds < 2) {
           ftRounds++;
           degrade();
-          ftFrames = 0; ftSlow = 0; ftLast = 0; // mede de novo já degradado
-        } else {
+          ftFrames = 0; ftSlow = 0; ftBad = 0; ftLast = 0; // mede de novo já degradado
+        } else if (ftFrames >= 110) {
           ftDone = true;
         }
       }

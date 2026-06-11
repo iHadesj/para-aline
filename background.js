@@ -12,9 +12,14 @@
   var W, H, DPR;
   var hearts = [];
   /* celular fraco: menos corações e render em 1x — eles são difusos,
-     ninguém percebe a resolução, mas a GPU percebe os pixels a menos */
+     ninguém percebe a resolução, mas a GPU percebe os pixels a menos.
+     Tela grande não garante hardware bom (tablet barato, notebook velho),
+     então poucos núcleos/pouca RAM também entram no modo leve */
   var isPhone = Math.min(screen.width, screen.height) < 520;
-  var COUNT = isPhone ? 12 : 16;
+  var weakHW = (navigator.hardwareConcurrency || 8) <= 4 ||
+               (navigator.deviceMemory || 8) <= 4;
+  var lowEnd = isPhone || weakHW;
+  var COUNT = lowEnd ? 12 : 16;
   var running = true;
   var rafId = null;
 
@@ -55,9 +60,11 @@
   }
 
   function resize() {
-    DPR = isPhone ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
+    DPR = lowEnd ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
     W = window.innerWidth;
     H = window.innerHeight;
+    /* teto de pixels: tela grande + retina multiplica o custo de cada frame */
+    if (W * H * DPR * DPR > 2.4e6) DPR = Math.max(1, Math.sqrt(2.4e6 / (W * H)));
     canvas.width  = W * DPR;
     canvas.height = H * DPR;
     canvas.style.width  = W + 'px';
@@ -92,8 +99,35 @@
     }
   }
 
-  function tick() {
+  /* ── Plano B: se os primeiros segundos vierem engasgados, corta os
+     corações pela metade e passa a desenhar frame sim, frame não
+     (30fps — pra coisa subindo devagar ninguém percebe) ── */
+  var perfFrames = 0, perfBad = 0, perfLast = 0, perfDone = false;
+  var skipFrame = false, skipToggle = false;
+
+  function watchPerf(now) {
+    if (perfLast) {
+      perfFrames++;
+      if (now - perfLast > 50) perfBad++;
+    }
+    perfLast = now;
+    if (perfBad >= 5) {
+      perfDone = true;
+      skipFrame = true;
+      hearts.length = Math.max(6, hearts.length >> 1);
+    } else if (perfFrames >= 110) {
+      perfDone = true;
+    }
+  }
+
+  function tick(now) {
     if (!running) return;
+    rafId = requestAnimationFrame(tick);
+    if (!perfDone) watchPerf(now);
+    if (skipFrame) {
+      skipToggle = !skipToggle;
+      if (skipToggle) return;
+    }
     ctx.clearRect(0, 0, W, H);
 
     for (var i = 0; i < hearts.length; i++) {
@@ -117,13 +151,12 @@
         hearts[i] = fresh;
       }
     }
-
-    rafId = requestAnimationFrame(tick);
   }
 
   function start() {
     if (rafId) cancelAnimationFrame(rafId);
     running = true;
+    perfLast = 0; // a pausa não conta como frame perdido
     rafId = requestAnimationFrame(tick);
   }
 
