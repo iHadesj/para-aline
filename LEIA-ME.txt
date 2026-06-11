@@ -1,0 +1,63 @@
+═══════════════════════════════════════════════════
+  PARA A ALINE ❤  —  guia rápido antes de enviar
+═══════════════════════════════════════════════════
+
+Feito sob medida pro iPhone 13 dela (Safari). Mas funciona
+em qualquer celular ou computador também.
+
+
+✅ CHECKLIST ANTES DE MANDAR (3 minutos)
+─────────────────────────────────────────
+
+1. ASSINE A CARTA (obrigatório!)
+   Abra  carta.html  num editor de texto, procure por:
+       var SIGNATURE = '— [seu nome]';
+   e troque [seu nome] pelo seu nome de verdade.
+
+2. COLOQUE A MÚSICA DE VOCÊS (opcional, mas recomendo demais)
+   Jogue um arquivo chamado  musica.mp3  dentro da pasta  audio/
+   (tem um txt lá dentro explicando).
+
+3. ADICIONE UMA FRASE NO CORAÇÃO (opcional)
+   Abra  coracao.html  e procure por "love-name" — hoje aparece
+   só o nome. Se quiser uma frase embaixo, adicione uma linha
+   <small>sua frase aqui</small> logo após o nome.
+
+4. TROQUE A ARTE DO PUZZLE POR UMA FOTO DE VOCÊS (opcional)
+   Substitua o arquivo  assets/puzzle-art.png  por uma foto
+   QUADRADA de vocês dois (ex: 900x900). Mantenha o mesmo nome
+   de arquivo que não precisa mexer em código nenhum.
+
+
+🚀 COMO MANDAR PRA ELA (escolha um jeito)
+─────────────────────────────────────────
+
+★ MELHOR OPÇÃO — mandar um LINK no WhatsApp:
+   1. Entre em  https://app.netlify.com/drop  (grátis, sem conta)
+   2. Arraste a PASTA inteira do site pra página
+   3. Ele te dá um link tipo  algo.netlify.app
+   4. Manda o link pra ela — abre direto no Safari, com música,
+      animação, tudo. Dá até pra "Adicionar à Tela de Início"
+      e vira um app com ícone de coração. 🥹
+
+   (Vercel.com também funciona igual, se preferir.)
+
+★ Alternativa simples: mandar o .zip e ela abrir o index.html
+   — funciona, mas o link é 1000x mais romântico e mais fácil pra ela.
+
+
+🗺️ O QUE TEM EM CADA PÁGINA
+─────────────────────────────────────────
+
+index.html    → menu inicial com os 3 cartões
+coracao.html  → coração de partículas que BATE de verdade,
+                com o nome dela. Toca nele e ele explode 💥
+puzzle.html   → quebra-cabeça deslizante (com botão de espiar 👀).
+                Quando resolve, leva pra carta.
+carta.html    → a carta digitada letra por letra.
+                Tocar na tela acelera, tocar de novo mostra tudo.
+
+⚠️ A pasta antiga "Namoro/" do projeto original não é mais usada,
+   pode apagar se quiser.
+
+Boa sorte amanhã. Ela não tem chance. 😎❤

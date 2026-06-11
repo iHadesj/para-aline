@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0314">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Carta ❤</title>
+  <link rel="icon" type="image/png" href="assets/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+
+  <canvas id="hearts-canvas"></canvas>
+
+  <a href="index.html" class="back-btn">← voltar</a>
+  <button class="music-btn" id="music-btn" title="Música" aria-label="Tocar ou pausar música"><i data-lucide="music"></i></button>
+
+  <main class="page">
+    <div class="carta-wrap">
+      <div class="carta-paper">
+        <span class="salutation" id="salutation"></span>
+        <span id="body"></span><span class="cursor" id="cursor"></span>
+        <span class="signature" id="signature"></span>
+      </div>
+
+      <div class="carta-footer" id="footer">
+        <a href="index.html" class="btn-primary">← voltar ao início</a>
+      </div>
+    </div>
+  </main>
+
+  <p class="skip-hint" id="skip-hint">toque na tela pra acelerar</p>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>if (window.lucide) lucide.createIcons();</script>
+  <script src="presentation.js"></script>
+  <script src="background.js"></script>
+  <script src="music.js"></script>
+  <script>
+  (function () {
+    // ── Conteúdo da carta — edite à vontade ──────────────────────────────────
+    var SALUTATION = 'Aline,';
+
+    var BODY = [
+      'Não sei exatamente como dizer isso sem parecer ensaiado,',
+      'então vou ser honesto.',
+      '',
+      'Você me surpreende.',
+      '',
+      'Tem uma forma que é só sua de existir, e eu fui percebendo',
+      'isso aos poucos, quase sem querer.',
+      '',
+      'Cada conversa foi ficando guardada em algum lugar',
+      'que eu nem sabia que existia.',
+      '',
+      'Não preciso de uma data especial pra saber',
+      'o quanto você é especial.',
+      'Mas já que o dia existe — aproveito.',
+      '',
+      'Feliz Dia dos Namorados. ❤',
+    ].join('\n');
+
+    var SIGNATURE = '— [seu nome]'; // ← TROQUE PELO SEU NOME antes de mandar!
+    // ─────────────────────────────────────────────────────────────────────────
+
+    var salEl  = document.getElementById('salutation');
+    var bodyEl = document.getElementById('body');
+    var cursor = document.getElementById('cursor');
+    var sigEl  = document.getElementById('signature');
+    var footer = document.getElementById('footer');
+    var hint   = document.getElementById('skip-hint');
+
+    var SALUTATION_DELAY = 400;   // ms até a saudação começar
+    var BODY_DELAY       = 900;   // ms entre saudação e corpo
+    var CHAR_BASE        = 36;    // ms por caractere
+    var PAUSE_COMMA      = 180;   // pausa extra em vírgula/travessão
+    var PAUSE_PERIOD     = 280;   // pausa extra em ponto/!/? 
+    var PAUSE_NEWLINE    = 320;   // pausa extra em quebra de linha
+
+    // ── Aceleração por toque ────────────────────────────────────────
+    var SPEED    = 1;      // 1 = normal; menor = mais rápido
+    var INSTANT  = false;  // true = mostra tudo de uma vez
+    var finished = false;
+    var pending  = null;   // timer pendente, pra poder furar a fila
+
+    function wait(ms, fn) {
+      if (INSTANT) { fn(); return; }
+      var entry = { fn: fn };
+      entry.id = setTimeout(function () {
+        if (pending === entry) pending = null;
+        fn();
+      }, ms * SPEED);
+      pending = entry;
+    }
+
+    function flushPending(delay) {
+      if (!pending) return;
+      clearTimeout(pending.id);
+      var f = pending.fn;
+      pending = null;
+      if (delay) setTimeout(f, delay);
+      else f();
+    }
+
+    function accelerate() {
+      if (finished) return;
+      if (SPEED === 1 && !INSTANT) {
+        SPEED = 0.22;
+        flushPending(40);
+        if (hint) hint.textContent = 'toque de novo pra mostrar tudo';
+      } else if (!INSTANT) {
+        INSTANT = true;
+        if (hint) hint.classList.add('off');
+        flushPending(0);
+      }
+    }
+
+    document.addEventListener('pointerdown', function (e) {
+      if (e.target.closest('a, button')) return;
+      accelerate();
+    });
+
+    setTimeout(function () {
+      if (!finished && !INSTANT && hint) hint.classList.add('on');
+    }, 2200);
+    // ────────────────────────────────────────────────────────────────
+
+    function typeText(target, text, onDone) {
+      var i = 0;
+      function putChar() {
+        var ch = text[i++];
+        if (ch === '\n') target.appendChild(document.createElement('br'));
+        else target.appendChild(document.createTextNode(ch));
+        return ch;
+      }
+      function next() {
+        if (INSTANT) {
+          while (i < text.length) putChar();
+          if (onDone) onDone();
+          return;
+        }
+        if (i >= text.length) {
+          if (onDone) onDone();
+          return;
+        }
+        var ch = putChar();
+        var delay = CHAR_BASE;
+        if (ch === '\n')                   delay += PAUSE_NEWLINE;
+        else if (ch === ',' || ch === '—') delay += PAUSE_COMMA;
+        else if (ch === '.' || ch === '!' || ch === '?') delay += PAUSE_PERIOD;
+        wait(delay, next);
+      }
+      next();
+    }
+
+    // Fase 1: saudação
+    wait(SALUTATION_DELAY, function () {
+      typeText(salEl, SALUTATION, function () {
+        // Fase 2: corpo
+        wait(BODY_DELAY, function () {
+          typeText(bodyEl, BODY, function () {
+            // Fase 3: some o cursor, entra a assinatura
+            cursor.style.display = 'none';
+            wait(400, function () {
+              typeText(sigEl, SIGNATURE, function () {
+                // Fase 4: botão de voltar
+                wait(600, function () {
+                  finished = true;
+                  if (hint) hint.classList.add('off');
+                  footer.classList.add('show');
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

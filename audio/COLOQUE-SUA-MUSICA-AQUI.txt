@@ -1,0 +1,12 @@
+COLOQUE SUA MÚSICA AQUI 🎵
+==========================
+
+1. Escolha a música de vocês (de preferência em .mp3)
+2. Renomeie o arquivo para:  musica.mp3
+3. Jogue ele aqui dentro desta pasta (audio/)
+
+Pronto! O botão ♪ no canto da tela vai tocar ela em loop,
+e a música continua de onde parou quando ela troca de página.
+
+Dica: se o arquivo for muito pesado (>10 MB), vale comprimir
+num conversor online pra carregar rápido no 4G dela.

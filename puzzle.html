@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0314">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Puzzle ❤</title>
+  <link rel="icon" type="image/png" href="assets/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/puzzle-art.png">
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+
+  <canvas id="hearts-canvas"></canvas>
+
+  <a href="index.html" class="back-btn">← voltar</a>
+  <button class="music-btn" id="music-btn" title="Música" aria-label="Tocar ou pausar música"><i data-lucide="music"></i></button>
+
+  <main class="page">
+    <p class="page__title">monte o quebra-cabeça ✨</p>
+
+    <div class="puzzle-grid" id="puzzle-grid"></div>
+
+    <div class="puzzle-meta">
+      <span>movimentos: <strong id="moves-el">0</strong></span>
+      <button class="peek-btn" id="peek-btn"><i data-lucide="eye"></i> espiar</button>
+    </div>
+
+    <p class="puzzle-hint">toque numa peça ao lado do espaço vazio &middot; segure "espiar" pra ver a imagem</p>
+  </main>
+
+  <!-- Espiar a imagem completa -->
+  <div class="peek" id="peek" aria-hidden="true">
+    <img src="assets/puzzle-art.png" alt="" draggable="false">
+  </div>
+
+  <!-- Overlay de vitória -->
+  <div class="win-overlay" id="win-overlay">
+    <div class="win-card">
+      <h2>Você conseguiu! <strong>❤</strong></h2>
+      <p id="win-sub">Agora tem algo esperando por você…</p>
+      <a href="carta.html" class="btn-primary">Ler a carta →</a>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>if (window.lucide) lucide.createIcons();</script>
+  <script src="presentation.js"></script>
+  <script src="background.js"></script>
+  <script src="music.js"></script>
+  <script>
+  (function () {
+    var COLS = 3;
+
+    // ── Imagem do puzzle ─────────────────────────────────────────────
+    // Pra usar uma foto de vocês: troque o caminho abaixo por url('assets/sua-foto.jpg')
+    // (de preferência uma imagem quadrada). Lembre de trocar também no <img> do "espiar".
+    var PUZZLE_IMG = "url('assets/puzzle-art.png')";
+    // ─────────────────────────────────────────────────────────────────
+
+    var PUZZLE_SIZE, PIECE;
+    var board = [0, 1, 2, 3, 4, 5, 6, 7, null];
+    var moves = 0;
+    var won = false;
+    var grid    = document.getElementById('puzzle-grid');
+    var movesEl = document.getElementById('moves-el');
+    var pieceEls = [];
+
+    function computeSize() {
+      var maxByWidth  = window.innerWidth - 56;
+      var maxByHeight = Math.floor(window.innerHeight * 0.5);
+      PUZZLE_SIZE = Math.min(320, maxByWidth, maxByHeight);
+      PIECE = Math.floor(PUZZLE_SIZE / COLS);
+      PUZZLE_SIZE = PIECE * COLS; // pixel exato
+    }
+
+    function applySizes() {
+      grid.style.width  = PUZZLE_SIZE + 'px';
+      grid.style.height = PUZZLE_SIZE + 'px';
+      for (var i = 0; i < pieceEls.length; i++) {
+        var el = pieceEls[i];
+        el.style.width  = PIECE + 'px';
+        el.style.height = PIECE + 'px';
+        el.style.backgroundSize = PUZZLE_SIZE + 'px ' + PUZZLE_SIZE + 'px';
+      }
+    }
+
+    computeSize();
+
+    // ── Cria as peças
+    for (var i = 0; i < 9; i++) {
+      var el = document.createElement('div');
+      el.className = 'piece';
+      el.style.backgroundImage = PUZZLE_IMG;
+      el.style.setProperty('--piece-order', i);
+      el.dataset.idx = i;
+      el.addEventListener('animationend', function (event) {
+        if (event.animationName === 'piece-drop')  this.classList.add('piece--ready');
+        if (event.animationName === 'piece-nudge') this.classList.remove('piece--moved');
+      });
+      grid.appendChild(el);
+      pieceEls.push(el);
+    }
+    applySizes();
+
+    // ── Embaralha: 240 movimentos válidos a partir do estado resolvido
+    //    (garante que o puzzle sempre tem solução)
+    function shuffle() {
+      var emptyIdx = 8;
+      var lastMove = -1;
+      for (var i = 0; i < 240; i++) {
+        var nb = neighbors(emptyIdx).filter(function (n) { return n !== lastMove; });
+        var next = nb[~~(Math.random() * nb.length)];
+        board[emptyIdx] = board[next];
+        board[next] = null;
+        lastMove = emptyIdx;
+        emptyIdx = next;
+      }
+    }
+
+    function neighbors(idx) {
+      var c = idx % COLS, r = Math.floor(idx / COLS);
+      var nb = [];
+      if (c > 0)        nb.push(idx - 1);
+      if (c < COLS - 1) nb.push(idx + 1);
+      if (r > 0)        nb.push(idx - COLS);
+      if (r < COLS - 1) nb.push(idx + COLS);
+      return nb;
+    }
+
+    // ── Renderiza posições + recorte do fundo
+    function render() {
+      for (var i = 0; i < 9; i++) {
+        var val = board[i];
+        var col = i % COLS;
+        var row = Math.floor(i / COLS);
+        var el  = pieceEls[i];
+
+        el.style.left = (col * PIECE) + 'px';
+        el.style.top  = (row * PIECE) + 'px';
+
+        if (val === null) {
+          el.classList.add('piece--empty');
+        } else {
+          el.classList.remove('piece--empty');
+          var ic = val % COLS;
+          var ir = Math.floor(val / COLS);
+          el.style.backgroundPosition = (-ic * PIECE) + 'px ' + (-ir * PIECE) + 'px';
+        }
+      }
+      movesEl.textContent = moves;
+    }
+
+    // ── Move a peça clicada se estiver do lado do vazio
+    function move(clickedIdx) {
+      if (won) return;
+
+      var emptyIdx = board.indexOf(null);
+      if (neighbors(emptyIdx).indexOf(clickedIdx) === -1) return;
+      board[emptyIdx] = board[clickedIdx];
+      board[clickedIdx] = null;
+      moves++;
+      render();
+
+      var movedEl = pieceEls[emptyIdx];
+      movedEl.classList.remove('piece--moved');
+      void movedEl.offsetWidth;
+      movedEl.classList.add('piece--moved');
+
+      checkWin();
+    }
+
+    // ── Vitória
+    function checkWin() {
+      for (var i = 0; i < 8; i++) {
+        if (board[i] !== i) return;
+      }
+      won = true;
+      board[8] = 8;
+      render();
+
+      pieceEls.forEach(function (el) { el.classList.add('piece--solved'); });
+      if (window.loveBurst) window.loveBurst(38);
+
+      var sub = document.getElementById('win-sub');
+      if (sub) {
+        sub.textContent = 'Em ' + moves + ' movimentos. Agora tem algo esperando por você…';
+      }
+
+      setTimeout(function () {
+        document.getElementById('win-overlay').classList.add('show');
+      }, 700);
+    }
+
+    // ── Toque / clique
+    grid.addEventListener('click', function (e) {
+      var el = e.target.closest('.piece');
+      if (!el) return;
+      move(parseInt(el.dataset.idx, 10));
+    });
+
+    grid.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      var touch = e.changedTouches[0];
+      var el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (el && el.classList.contains('piece')) {
+        move(parseInt(el.dataset.idx, 10));
+      }
+    }, { passive: false });
+
+    // ── Teclado (desktop)
+    document.addEventListener('keydown', function (e) {
+      var emptyIdx = board.indexOf(null);
+      var map = { ArrowUp: COLS, ArrowDown: -COLS, ArrowLeft: 1, ArrowRight: -1 };
+      var offset = map[e.key];
+      if (offset === undefined) return;
+      var target = emptyIdx + offset;
+      if (target >= 0 && target < 9 && neighbors(emptyIdx).indexOf(target) !== -1) {
+        move(target);
+      }
+    });
+
+    // ── Espiar a imagem (segurar)
+    var peekBtn = document.getElementById('peek-btn');
+    var peek    = document.getElementById('peek');
+
+    function showPeek(e) { e.preventDefault(); peek.classList.add('show'); }
+    function hidePeek()  { peek.classList.remove('show'); }
+
+    peekBtn.addEventListener('pointerdown', showPeek);
+    window.addEventListener('pointerup', hidePeek);
+    window.addEventListener('pointercancel', hidePeek);
+    peekBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    // ── Gira a tela / muda tamanho → recalcula
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        computeSize();
+        applySizes();
+        render();
+      }, 120);
+    });
+
+    shuffle();
+    render();
+  })();
+  </script>
+</body>
+</html>

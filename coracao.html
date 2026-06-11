@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0314">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Coração ❤</title>
+  <link rel="icon" type="image/png" href="assets/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+
+  <canvas id="hearts-canvas"></canvas>
+
+  <a href="index.html" class="back-btn">← voltar</a>
+  <button class="music-btn" id="music-btn" title="Música" aria-label="Tocar ou pausar música"><i data-lucide="music"></i></button>
+
+  <div class="love-stage" id="love-stage">
+    <canvas id="love-canvas"></canvas>
+  </div>
+
+  <!-- ↓ mude o nome aqui ↓ -->
+  <div class="love-name" id="love-name">
+    Aline
+  </div>
+
+  <p class="love-hint" id="love-hint">toque no coração ✨</p>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>if (window.lucide) lucide.createIcons();</script>
+  <script src="presentation.js"></script>
+  <script src="background.js"></script>
+  <script src="music.js"></script>
+  <script>
+  (function () {
+    var reduceMotion = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var stage  = document.getElementById('love-stage');
+    var canvas = document.getElementById('love-canvas');
+    var nameEl = document.getElementById('love-name');
+    var hintEl = document.getElementById('love-hint');
+    var ctx    = canvas.getContext('2d');
+
+    stage.style.touchAction = 'manipulation';
+
+    var DPR = Math.min(window.devicePixelRatio || 1, 2);
+    var W, H, S, CY, CX;
+    var particles = [];
+    var sparkles  = [];
+    var running   = true;
+    var rafId     = null;
+    var lastBurst = 0;
+
+    // ── Ajustes finos ──────────────────────────────────────────────
+    var SPRING   = 0.014;  // força que puxa cada partícula pro lugar
+    var DAMP     = 0.86;   // amortecimento (quanto menor, mais "gelatina")
+    var BEAT_MS  = 1250;   // duração de um batimento completo
+    var BEAT_AMP = 0.062;  // quanto o coração "incha" no batimento
+    // ───────────────────────────────────────────────────────────────
+
+    var COLORS  = ['#ff4d7d', '#ff7aa2', '#ffa3bd', '#ff2e63', '#ffd9e4'];
+    var sprites = COLORS.map(makeDotSprite);
+    var goldSprite = makeDotSprite('#ffd9a0');
+
+    function makeDotSprite(color) {
+      var s = document.createElement('canvas');
+      s.width = s.height = 64;
+      var c = s.getContext('2d');
+      var g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0,    'rgba(255,255,255,1)');
+      g.addColorStop(0.22, color);
+      g.addColorStop(0.55, hexToRgba(color, 0.34));
+      g.addColorStop(1,    'rgba(0,0,0,0)');
+      c.fillStyle = g;
+      c.fillRect(0, 0, 64, 64);
+      return s;
+    }
+
+    function hexToRgba(hex, a) {
+      var n = parseInt(hex.slice(1), 16);
+      return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+    }
+
+    // Curva paramétrica do coração (mesma equação do fundo)
+    function heartXY(t) {
+      return {
+        x: 16 * Math.pow(Math.sin(t), 3),
+        y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))
+      };
+    }
+
+    function layout() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width  = W * DPR;
+      canvas.height = H * DPR;
+      canvas.style.width  = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+      // escala do coração: cabe na largura e na altura, com teto
+      S  = Math.min((W * 0.84) / 32, (H * 0.46) / 29, 13);
+      CX = W / 2;
+      CY = H * 0.45 - 2.5 * S; // centro visual do coração em 45% da tela
+    }
+
+    function buildTargets() {
+      var count = Math.max(300, Math.min(540, Math.floor((W * H) / 900)));
+      var targets = [];
+      var outline = Math.floor(count * 0.45);
+      var i, t, p, r;
+
+      for (i = 0; i < outline; i++) {
+        t = (Math.PI * 2 * i) / outline + (Math.random() - 0.5) * 0.04;
+        p = heartXY(t);
+        r = 0.96 + Math.random() * 0.05;
+        targets.push({ x: p.x * S * r, y: p.y * S * r });
+      }
+      for (i = outline; i < count; i++) {
+        t = Math.random() * Math.PI * 2;
+        p = heartXY(t);
+        r = Math.sqrt(Math.random()) * 0.92;
+        targets.push({ x: p.x * S * r, y: p.y * S * r });
+      }
+      return targets;
+    }
+
+    function initParticles() {
+      var targets = buildTargets();
+      particles = targets.map(function (tg) {
+        return {
+          x: Math.random() * W,
+          y: Math.random() * H,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          tx: tg.x, ty: tg.y,
+          size: 3.2 + Math.random() * 3.8,
+          sprite: sprites[(Math.random() * sprites.length) | 0],
+          phase: Math.random() * Math.PI * 2,
+          wob: 1.4 + Math.random() * 1.6
+        };
+      });
+
+      sparkles = [];
+      for (var i = 0; i < 26; i++) {
+        sparkles.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          size: 1.5 + Math.random() * 2.5,
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.0012 + Math.random() * 0.0014
+        });
+      }
+    }
+
+    function retarget() {
+      var targets = buildTargets();
+      for (var i = 0; i < particles.length; i++) {
+        var tg = targets[i % targets.length];
+        particles[i].tx = tg.x;
+        particles[i].ty = tg.y;
+      }
+    }
+
+    // Batimento: dois pulsos por ciclo (tum… tum)
+    function beat(ms) {
+      var x = (ms % BEAT_MS) / BEAT_MS;
+      return Math.exp(-Math.pow((x - 0.10) / 0.045, 2)) +
+             0.5 * Math.exp(-Math.pow((x - 0.28) / 0.060, 2));
+    }
+
+    function tick(now) {
+      if (!running) return;
+      rafId = requestAnimationFrame(tick);
+
+      var b = beat(now);
+      var scale = 1 + BEAT_AMP * b;
+      var glow  = 1 + 0.55 * b;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+
+      // sparkles douradas ambiente
+      for (var s = 0; s < sparkles.length; s++) {
+        var sk = sparkles[s];
+        var a = 0.18 + 0.30 * (0.5 + 0.5 * Math.sin(now * sk.speed + sk.phase));
+        ctx.globalAlpha = a;
+        var d0 = sk.size * 3.4;
+        ctx.drawImage(goldSprite, sk.x - d0 / 2, sk.y - d0 / 2, d0, d0);
+      }
+
+      // partículas do coração
+      ctx.globalAlpha = 1;
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+
+        var wx = Math.sin(now * 0.0012 + p.phase) * p.wob;
+        var wy = Math.cos(now * 0.0010 + p.phase) * p.wob;
+        var ax = (CX + (p.tx * scale) + wx - p.x) * SPRING;
+        var ay = (CY + (p.ty * scale) + wy - p.y) * SPRING;
+
+        p.vx = (p.vx + ax) * DAMP;
+        p.vy = (p.vy + ay) * DAMP;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        var d = p.size * (2.4 + 1.1 * b) * (0.9 + 0.2 * Math.sin(now * 0.003 + p.phase));
+        ctx.drawImage(p.sprite, p.x - d / 2, p.y - d / 2, d * glow * 0.6 + d * 0.4, d * glow * 0.6 + d * 0.4);
+      }
+
+      // nome pulsando junto
+      if (nameEl) {
+        nameEl.style.transform = 'translate(-50%, -50%) scale(' + (1 + 0.05 * b).toFixed(3) + ')';
+      }
+    }
+
+    function explode(px, py) {
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        var dx = p.x - px;
+        var dy = p.y - py;
+        var d = Math.sqrt(dx * dx + dy * dy) + 0.001;
+        var force = 26 * Math.exp(-d / 150) + 3 * Math.random();
+        p.vx += (dx / d) * force + (Math.random() - 0.5) * 3;
+        p.vy += (dy / d) * force - 2 + (Math.random() - 0.5) * 3;
+      }
+    }
+
+    // ── Interação ──────────────────────────────────────────────────
+    stage.addEventListener('pointerdown', function (e) {
+      if (reduceMotion) return;
+      explode(e.clientX, e.clientY);
+      if (hintEl) hintEl.classList.add('hide');
+
+      var now = Date.now();
+      if (window.loveBurst && now - lastBurst > 900) {
+        lastBurst = now;
+        window.loveBurst(14);
+      }
+    });
+
+    // ── Ciclo de vida ──────────────────────────────────────────────
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        running = false;
+        if (rafId) cancelAnimationFrame(rafId);
+      } else if (!reduceMotion) {
+        running = true;
+        rafId = requestAnimationFrame(tick);
+      }
+    });
+
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        layout();
+        retarget();
+        if (reduceMotion) drawStatic();
+      }, 120);
+    });
+
+    function drawStatic() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.x = CX + p.tx;
+        p.y = CY + p.ty;
+        var d = p.size * 2.6;
+        ctx.drawImage(p.sprite, p.x - d / 2, p.y - d / 2, d, d);
+      }
+    }
+
+    layout();
+    initParticles();
+
+    if (reduceMotion) {
+      drawStatic();
+      if (hintEl) hintEl.classList.add('hide');
+    } else {
+      rafId = requestAnimationFrame(tick);
+    }
+  })();
+  </script>
+</body>
+</html>
