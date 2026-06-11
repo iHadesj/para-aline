@@ -12,11 +12,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="main.css">
+  <!-- ?v=2 força o iPhone a baixar a versão nova em vez de usar o cache -->
+  <link rel="stylesheet" href="main.css?v=2">
   <style>
     /* Ajustes de performance só desta página (o canvas do coração já é pesado):
-       - blur() nos orbs e backdrop-filter custam MUITO no Safari do iPhone */
-    .orb { filter: none; }
+       blur() nos orbs, animação infinita neles e backdrop-filter custam MUITO
+       no Safari do iPhone — aqui tudo isso sai */
+    .orb { filter: none; animation: none; will-change: auto; }
     .back-btn, .music-btn {
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
@@ -30,7 +32,10 @@
   <div class="orb orb-2"></div>
 
   <a href="index.html" class="back-btn">← voltar</a>
-  <button class="music-btn" id="music-btn" title="Música" aria-label="Tocar ou pausar música"><i data-lucide="music"></i></button>
+  <button class="music-btn" id="music-btn" title="Música" aria-label="Tocar ou pausar música">
+    <!-- ícone embutido: dispensa baixar a biblioteca lucide inteira nesta página -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+  </button>
 
   <div class="love-stage" id="love-stage">
     <canvas id="love-canvas"></canvas>
@@ -38,10 +43,8 @@
 
   <p class="love-hint" id="love-hint">toque no coração ✨</p>
 
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script>if (window.lucide) lucide.createIcons();</script>
-  <script src="presentation.js"></script>
-  <script src="music.js"></script>
+  <script src="presentation.js?v=2"></script>
+  <script src="music.js?v=2"></script>
   <script>
   (function () {
     var reduceMotion = window.matchMedia &&
@@ -54,8 +57,11 @@
 
     stage.style.touchAction = 'manipulation';
 
-    // 1.5 já fica nítido — em 2 o iPhone desenha quase o dobro de pixels à toa
-    var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    // Celular renderiza em 1x: as partículas são bolinhas de brilho difusas,
+    // resolução retina aqui só multiplica pixel sem ninguém notar a diferença
+    var isPhone = Math.min(screen.width, screen.height) < 520;
+    var DPR = isPhone ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
+
     var W, H, S, CY, CX;
     var particles = [];
     var sparkles  = [];
@@ -71,8 +77,17 @@
     // ───────────────────────────────────────────────────────────────
 
     var COLORS  = ['#ff4d7d', '#ff7aa2', '#ffa3bd', '#ff2e63', '#ffd9e4'];
-    var sprites = COLORS.map(makeDotSprite);
-    var goldSprite = makeDotSprite('#ffd9a0');
+    var SPRITES = COLORS.map(makeDotSprite);
+    var GOLD    = SPRITES.push(makeDotSprite('#ffd9a0')) - 1;
+
+    /* Safari desenha ImageBitmap bem mais rápido que canvas→canvas;
+       enquanto a conversão não termina, os canvas servem de reserva */
+    if (window.createImageBitmap) {
+      SPRITES.forEach(function (c, i) {
+        createImageBitmap(c).then(function (bmp) { SPRITES[i] = bmp; })
+          .catch(function () { /* fica no canvas mesmo */ });
+      });
+    }
 
     function makeDotSprite(color) {
       var s = document.createElement('canvas');
@@ -93,7 +108,7 @@
       return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
     }
 
-    // Curva paramétrica do coração (mesma equação do fundo)
+    // Curva paramétrica do coração
     function heartXY(t) {
       return {
         x: 16 * Math.pow(Math.sin(t), 3),
@@ -104,8 +119,8 @@
     function layout() {
       W = window.innerWidth;
       H = window.innerHeight;
-      canvas.width  = W * DPR;
-      canvas.height = H * DPR;
+      canvas.width  = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
       canvas.style.width  = W + 'px';
       canvas.style.height = H + 'px';
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -116,10 +131,13 @@
       CY = H * 0.45 - 2.5 * S; // centro visual do coração em 45% da tela
     }
 
-    function buildTargets() {
-      var count = Math.max(180, Math.min(320, Math.floor((W * H) / 1600)));
+    function particleCount() {
+      return Math.max(130, Math.min(280, Math.floor((W * H) / 2400)));
+    }
+
+    function buildTargets(count) {
       var targets = [];
-      var outline = Math.floor(count * 0.45);
+      var outline = Math.floor(count * 0.5);
       var i, t, p, r;
 
       for (i = 0; i < outline; i++) {
@@ -138,7 +156,7 @@
     }
 
     function initParticles() {
-      var targets = buildTargets();
+      var targets = buildTargets(particleCount());
       particles = targets.map(function (tg) {
         return {
           x: Math.random() * W,
@@ -146,15 +164,15 @@
           vx: (Math.random() - 0.5) * 2,
           vy: (Math.random() - 0.5) * 2,
           tx: tg.x, ty: tg.y,
-          size: 3.2 + Math.random() * 3.8,
-          sprite: sprites[(Math.random() * sprites.length) | 0],
+          size: 3.6 + Math.random() * 4.2,
+          si: (Math.random() * COLORS.length) | 0,
           phase: Math.random() * Math.PI * 2,
           wob: 1.4 + Math.random() * 1.6
         };
       });
 
       sparkles = [];
-      for (var i = 0; i < 16; i++) {
+      for (var i = 0; i < 12; i++) {
         sparkles.push({
           x: Math.random() * W,
           y: Math.random() * H,
@@ -166,11 +184,38 @@
     }
 
     function retarget() {
-      var targets = buildTargets();
+      var targets = buildTargets(particles.length);
       for (var i = 0; i < particles.length; i++) {
-        var tg = targets[i % targets.length];
-        particles[i].tx = tg.x;
-        particles[i].ty = tg.y;
+        particles[i].tx = targets[i].x;
+        particles[i].ty = targets[i].y;
+      }
+    }
+
+    /* ── Plano B automático: mede os primeiros ~2s e, se o aparelho
+       estiver perdendo muitos frames, corta partícula na metade e
+       engorda as que sobram — o coração continua cheio, só que leve ── */
+    var ftFrames = 0, ftSlow = 0, ftLast = 0, ftDone = false;
+    function watchPerf(now) {
+      if (ftLast) {
+        ftFrames++;
+        if (now - ftLast > 26) ftSlow++; // frame de 60fps estourado com folga
+      }
+      ftLast = now;
+      if (ftFrames >= 110) {
+        ftDone = true;
+        if (ftSlow > ftFrames * 0.35) degrade();
+      }
+    }
+
+    function degrade() {
+      var keep = Math.max(90, (particles.length / 2) | 0);
+      particles.length = keep;
+      sparkles.length  = Math.min(sparkles.length, 8);
+      var targets = buildTargets(keep);
+      for (var i = 0; i < keep; i++) {
+        particles[i].tx = targets[i].x;
+        particles[i].ty = targets[i].y;
+        particles[i].size *= 1.3;
       }
     }
 
@@ -184,6 +229,7 @@
     function tick(now) {
       if (!running) return;
       rafId = requestAnimationFrame(tick);
+      if (!ftDone) watchPerf(now);
 
       var b = beat(now);
       var scale = 1 + BEAT_AMP * b;
@@ -198,7 +244,7 @@
         var a = 0.18 + 0.30 * (0.5 + 0.5 * Math.sin(now * sk.speed + sk.phase));
         ctx.globalAlpha = a;
         var d0 = sk.size * 3.4;
-        ctx.drawImage(goldSprite, sk.x - d0 / 2, sk.y - d0 / 2, d0, d0);
+        ctx.drawImage(SPRITES[GOLD], sk.x - d0 / 2, sk.y - d0 / 2, d0, d0);
       }
 
       // partículas do coração
@@ -216,9 +262,9 @@
         p.x += p.vx;
         p.y += p.vy;
 
-        var d = p.size * (2.4 + 1.1 * b) * (0.9 + 0.2 * Math.sin(now * 0.003 + p.phase));
+        var d  = p.size * (2.4 + 1.1 * b) * (0.9 + 0.2 * Math.sin(now * 0.003 + p.phase));
         var dd = d * (glow * 0.6 + 0.4);
-        ctx.drawImage(p.sprite, p.x - dd / 2, p.y - dd / 2, dd, dd);
+        ctx.drawImage(SPRITES[p.si], p.x - dd / 2, p.y - dd / 2, dd, dd);
       }
     }
 
@@ -254,6 +300,7 @@
         if (rafId) cancelAnimationFrame(rafId);
       } else if (!reduceMotion) {
         running = true;
+        ftLast = 0; // não conta a pausa como frame perdido
         rafId = requestAnimationFrame(tick);
       }
     });
@@ -276,7 +323,7 @@
         p.x = CX + p.tx;
         p.y = CY + p.ty;
         var d = p.size * 2.6;
-        ctx.drawImage(p.sprite, p.x - d / 2, p.y - d / 2, d, d);
+        ctx.drawImage(SPRITES[p.si], p.x - d / 2, p.y - d / 2, d, d);
       }
     }
 
