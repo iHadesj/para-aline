@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <!-- Arte do puzzle: coração sem texto. Detalhes assimétricos de propósito
+       (mini-corações, estrelas e brilhos em cantos diferentes) pra cada uma
+       das 9 peças ser reconhecível. Sem <filter>: só gradientes, que rendem
+       igual em qualquer Safari, até os bem antigos. -->
+  <defs>
+    <!-- fundo diagonal: cada canto tem um tom, ajuda a distinguir as peças -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#341040"/>
+      <stop offset="0.45" stop-color="#1c0526"/>
+      <stop offset="1" stop-color="#0b0314"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.44" r="0.55">
+      <stop offset="0" stop-color="#ff5e8a" stop-opacity="0.42"/>
+      <stop offset="0.55" stop-color="#ff5e8a" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ff5e8a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="heart" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#ff8fb0"/>
+      <stop offset="0.5" stop-color="#ff5e8a"/>
+      <stop offset="1" stop-color="#e0245e"/>
+    </linearGradient>
+    <linearGradient id="heartSmall" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd9a0"/>
+      <stop offset="1" stop-color="#ffb46e"/>
+    </linearGradient>
+    <!-- brilho de vidro: gradiente radial suave no lugar de blur -->
+    <radialGradient id="gloss" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <rect width="600" height="600" fill="url(#glow)"/>
+
+  <!-- estrelinhas espalhadas de forma assimétrica (uma por região do puzzle) -->
+  <g fill="#fdf2f6">
+    <circle cx="64"  cy="78"  r="2.6" opacity="0.9"/>
+    <circle cx="118" cy="46"  r="1.5" opacity="0.55"/>
+    <circle cx="300" cy="54"  r="1.8" opacity="0.6"/>
+    <circle cx="514" cy="92"  r="2.2" opacity="0.8"/>
+    <circle cx="556" cy="170" r="1.4" opacity="0.5"/>
+    <circle cx="46"  cy="300" r="1.7" opacity="0.6"/>
+    <circle cx="560" cy="330" r="2.4" opacity="0.75"/>
+    <circle cx="84"  cy="520" r="2.0" opacity="0.7"/>
+    <circle cx="300" cy="560" r="1.5" opacity="0.5"/>
+    <circle cx="500" cy="540" r="2.6" opacity="0.85"/>
+  </g>
+
+  <!-- estrelas de 4 pontas, cada uma num canto diferente, tamanhos diferentes -->
+  <g fill="#ffd9a0">
+    <path d="M520 60 l4.5 13 13 4.5 -13 4.5 -4.5 13 -4.5 -13 -13 -4.5 13 -4.5 Z" opacity="0.95"/>
+    <path d="M76 412 l3.5 10 10 3.5 -10 3.5 -3.5 10 -3.5 -10 -10 -3.5 10 -3.5 Z" opacity="0.8"/>
+    <path d="M540 470 l2.8 8 8 2.8 -8 2.8 -2.8 8 -2.8 -8 -8 -2.8 8 -2.8 Z" opacity="0.7"/>
+  </g>
+
+  <!-- halo atrás do coração (gradiente, sem blur) -->
+  <ellipse cx="300" cy="250" rx="245" ry="225" fill="url(#glow)"/>
+
+  <!-- coração principal -->
+  <path fill="url(#heart)"
+    d="M300 446 C 208 374, 104 302, 104 194 C 104 122, 160 76, 224 76 C 262 76, 288 98, 300 122 C 312 98, 338 76, 376 76 C 440 76, 496 122, 496 194 C 496 302, 392 374, 300 446 Z"/>
+
+  <!-- brilho de vidro no lóbulo esquerdo (assimétrico de propósito) -->
+  <ellipse cx="222" cy="150" rx="78" ry="48" fill="url(#gloss)" transform="rotate(-18 222 150)"/>
+  <ellipse cx="196" cy="132" rx="30" ry="17" fill="url(#gloss)" transform="rotate(-18 196 132)"/>
+
+  <!-- glints dentro do coração: orientam a peça central do puzzle -->
+  <g fill="#ffffff">
+    <path d="M352 248 l3 9 9 3 -9 3 -3 9 -3 -9 -9 -3 9 -3 Z" opacity="0.85"/>
+    <circle cx="330" cy="290" r="2.6" opacity="0.6"/>
+    <circle cx="376" cy="226" r="1.8" opacity="0.5"/>
+  </g>
+
+  <!-- mini-corações satélites, um por canto, cores e rotações diferentes -->
+  <g>
+    <path fill="url(#heartSmall)" transform="translate(78 130) rotate(-20) scale(0.115)"
+      d="M300 446 C 208 374, 104 302, 104 194 C 104 122, 160 76, 224 76 C 262 76, 288 98, 300 122 C 312 98, 338 76, 376 76 C 440 76, 496 122, 496 194 C 496 302, 392 374, 300 446 Z"/>
+    <path fill="#ff7da1" transform="translate(468 388) rotate(16) scale(0.155)"
+      d="M300 446 C 208 374, 104 302, 104 194 C 104 122, 160 76, 224 76 C 262 76, 288 98, 300 122 C 312 98, 338 76, 376 76 C 440 76, 496 122, 496 194 C 496 302, 392 374, 300 446 Z"/>
+    <path fill="#b06ce8" opacity="0.9" transform="translate(120 470) rotate(-12) scale(0.085)"
+      d="M300 446 C 208 374, 104 302, 104 194 C 104 122, 160 76, 224 76 C 262 76, 288 98, 300 122 C 312 98, 338 76, 376 76 C 440 76, 496 122, 496 194 C 496 302, 392 374, 300 446 Z"/>
+  </g>
+
+  <!-- arco pontilhado descendo pela direita: dá direção às peças do meio -->
+  <g fill="#ffb3c8" opacity="0.65">
+    <circle cx="430" cy="486" r="3.4"/>
+    <circle cx="463" cy="508" r="2.7"/>
+    <circle cx="498" cy="522" r="2.1"/>
+    <circle cx="533" cy="528" r="1.6"/>
+  </g>
+</svg>
